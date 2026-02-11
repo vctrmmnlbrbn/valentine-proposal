@@ -8,20 +8,39 @@ export default function App() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [hideNoButton, setHideNoButton] = useState(false);
+  const [musicStarted, setMusicStarted] = useState(false);
   const noButtonRef = useRef<HTMLButtonElement>(null);
   const bgMusicRef = useRef<HTMLAudioElement>(null);
   const celebrationSoundRef = useRef<HTMLAudioElement>(null);
 
-  // Auto-play background music when component mounts
+  // Monitor background music and restart if it stops unexpectedly
   useEffect(() => {
+    const bgMusic = bgMusicRef.current;
+    if (!bgMusic) return;
+
+    const handlePause = () => {
+      // If music is paused but we want it playing (and user has started music)
+      if (musicStarted && bgMusic.paused) {
+        bgMusic.play().catch(err => console.log('Could not resume music:', err));
+      }
+    };
+
+    bgMusic.addEventListener('pause', handlePause);
+    return () => bgMusic.removeEventListener('pause', handlePause);
+  }, [musicStarted]);
+
+  const startMusic = async () => {
     if (bgMusicRef.current) {
       bgMusicRef.current.volume = 0.3;
-      bgMusicRef.current.play().catch(() => {
-        // Auto-play might be blocked, user needs to interact first
-        console.log('Audio autoplay blocked. Click anywhere to start music.');
-      });
+      try {
+        await bgMusicRef.current.play();
+        setMusicStarted(true);
+      } catch (error) {
+        console.log('Could not play music:', error);
+      }
     }
-  }, []);
+  };
+
 
   const handleNoHover = () => {
     const newAttempts = attempts + 1;
@@ -47,12 +66,14 @@ export default function App() {
   };
 
   const handleYesClick = () => {
-    // Pause background music and play celebration sound
-    if (bgMusicRef.current) {
-      bgMusicRef.current.pause();
-    }
+    // Play celebration sound at lower volume (background music continues)
     if (celebrationSoundRef.current) {
+      celebrationSoundRef.current.volume = 0.4;
       celebrationSoundRef.current.play();
+    }
+    // Ensure background music is still playing
+    if (bgMusicRef.current && bgMusicRef.current.paused) {
+      bgMusicRef.current.play();
     }
     setShowCelebration(true);
   };
@@ -68,16 +89,18 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-red-50 to-pink-200 flex items-center justify-center overflow-hidden relative">
+    <div
+  className="min-h-screen bg-gradient-to-br from-pink-100 via-red-50 to-pink-200 flex items-center justify-center overflow-hidden relative">
+
       {/* Audio elements */}
       {/* Replace these src URLs with your own audio files */}
       <audio ref={bgMusicRef} loop>
-        <source src="public\loveSong.mp3" type="audio/mpeg" />
+        <source src="/loveSong.mp3" type="audio/mpeg" />
         {/* To add your own music: Place an MP3 file in the /public folder named "love-song.mp3" */}
         {/* Or use a URL: <source src="https://your-audio-url.com/song.mp3" type="audio/mpeg" /> */}
       </audio>
       <audio ref={celebrationSoundRef}>
-        <source src="public\buttonSound.mp3" type="audio/mpeg" />
+        <source src="/buttonSound.mp3" type="audio/mpeg" />
         {/* To add your own sound: Place an MP3 file in the /public folder named "celebration.mp3" */}
       </audio>
 
@@ -129,6 +152,32 @@ export default function App() {
           </motion.div>
         ))}
       </div>
+
+      <AnimatePresence>
+        {!musicStarted && (
+          <motion.div
+            className="fixed inset-0 bg-gradient-to-br from-pink-200 via-red-100 to-pink-300 z-50 flex items-center justify-center cursor-pointer"
+            onClick={startMusic}
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.div
+              className="text-center"
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Heart className="text-red-500 mx-auto mb-6" size={80} fill="currentColor" />
+              <h2 className="text-5xl font-bold text-red-600 mb-4">
+                Click to Start 💕
+              </h2>
+              <p className="text-xl text-gray-600">
+                Tap anywhere to begin...
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {!showCelebration ? (
