@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Heart, Sparkles } from 'lucide-react';
 
 export default function App() {
+  const assetBaseUrl = import.meta.env.BASE_URL;
   const [noButtonScale, setNoButtonScale] = useState(1);
   const [noButtonPosition, setNoButtonPosition] = useState({ x: 0, y: 120 });
   const [showCelebration, setShowCelebration] = useState(false);
@@ -95,12 +96,12 @@ export default function App() {
       {/* Audio elements */}
       {/* Replace these src URLs with your own audio files */}
       <audio ref={bgMusicRef} loop>
-        <source src="/loveSong.mp3" type="audio/mpeg" />
+        <source src={`${assetBaseUrl}loveSong.mp3`} type="audio/mpeg" />
         {/* To add your own music: Place an MP3 file in the /public folder named "love-song.mp3" */}
         {/* Or use a URL: <source src="https://your-audio-url.com/song.mp3" type="audio/mpeg" /> */}
       </audio>
       <audio ref={celebrationSoundRef}>
-        <source src="/buttonSound.mp3" type="audio/mpeg" />
+        <source src={`${assetBaseUrl}buttonSound.mp3`} type="audio/mpeg" />
         {/* To add your own sound: Place an MP3 file in the /public folder named "celebration.mp3" */}
       </audio>
 
